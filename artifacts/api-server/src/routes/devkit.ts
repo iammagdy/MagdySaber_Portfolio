@@ -657,7 +657,7 @@ router.get("/public/site-settings", async (_req, res) => {
       if (typeof val === "string") { try { val = JSON.parse(val); } catch { /* keep raw */ } }
       out[r.section] = val;
     }
-    res.set("Cache-Control", "public, max-age=60");
+    res.set("Cache-Control", "no-cache, must-revalidate");
     res.json(out);
   } catch (err) {
     logger.error({ err }, "site-settings public read failed");

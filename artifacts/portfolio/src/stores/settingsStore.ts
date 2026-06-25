@@ -46,7 +46,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
   fetchSettings: async () => {
     try {
-      const r = await fetch(apiUrl("/api/public/site-settings"));
+      const r = await fetch(apiUrl("/api/public/site-settings"), { cache: "no-store" });
       if (!r.ok) return;
       const data = (await r.json()) as Record<string, unknown>;
       set((state) => ({
