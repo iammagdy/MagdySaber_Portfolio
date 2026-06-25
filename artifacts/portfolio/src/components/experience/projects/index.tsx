@@ -64,7 +64,11 @@ const Projects = () => {
                 position={new THREE.Vector3(0, -1, -1)}
               />
             </Suspense>
-          ) : null}
+          ) : (
+            <Suspense fallback={null}>
+              <WandererTile />
+            </Suspense>
+          )}
           <ProjectsCarousel />
         </>
       )}

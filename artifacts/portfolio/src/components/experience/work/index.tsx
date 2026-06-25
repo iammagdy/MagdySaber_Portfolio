@@ -86,7 +86,11 @@ const Work = () => {
             <Suspense fallback={null}>
               <Memory scale={new THREE.Vector3(5, 5, 5)} position={new THREE.Vector3(0, -6, 1)}/>
             </Suspense>
-          ) : null}
+          ) : (
+            <Suspense fallback={null}>
+              <MemoryTile />
+            </Suspense>
+          )}
           <Timeline progress={isActive ? scrollProgress : 0} />
         </ScrollControls>
       )}

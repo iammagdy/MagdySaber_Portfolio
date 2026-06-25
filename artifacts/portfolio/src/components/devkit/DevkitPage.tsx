@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
+import SettingsTab from "./SettingsTab";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 const apiUrl = (path: string) => `${API_BASE}${path}`;
@@ -329,6 +330,7 @@ const DevkitPage = () => {
   const [biometricState, setBiometricState] = useState<"idle" | "working" | "done" | "error">("idle");
   const [biometricErr, setBiometricErr] = useState<string | null>(null);
   const [biometricLogging, setBiometricLogging] = useState(false);
+  const [view, setView] = useState<"analytics" | "settings">("analytics");
 
   useEffect(() => {
     document.title = "Devkit — Magdy Saber";
@@ -512,6 +514,25 @@ const DevkitPage = () => {
         </div>
       </div>
 
+      {/* ── Tab switcher ─────────────────────────────────────────────── */}
+      <div className="flex items-center gap-1.5 pt-1">
+        <button onClick={() => setView("analytics")}
+          className={`shrink-0 border px-3 py-1 font-vercetti text-[10px] uppercase tracking-widest transition-colors rounded-sm ${view === "analytics" ? "border-neutral-300 text-white bg-neutral-800" : "border-neutral-800 text-neutral-500 hover:text-white"}`}>
+          Analytics
+        </button>
+        <button onClick={() => setView("settings")}
+          className={`shrink-0 border px-3 py-1 font-vercetti text-[10px] uppercase tracking-widest transition-colors rounded-sm ${view === "settings" ? "border-neutral-300 text-white bg-neutral-800" : "border-neutral-800 text-neutral-500 hover:text-white"}`}>
+          Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+      {view === "settings" ? (
+        <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6">
+          <SettingsTab />
+        </div>
+      ) : (
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 space-y-5">
 
         {statsErr && <div className="border border-red-900 bg-red-950/40 text-red-400 px-4 py-3 font-vercetti text-xs rounded-sm">{statsErr}</div>}
@@ -996,6 +1017,7 @@ const DevkitPage = () => {
           </>
         )}
       </div>
+      )}
     </div>
   );
 };

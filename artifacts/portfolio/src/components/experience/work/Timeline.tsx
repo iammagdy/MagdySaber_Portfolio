@@ -1,11 +1,10 @@
 import { Box, Edges, Line, Text, TextProps } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { usePortalStore } from "@stores";
+import { usePortalStore, useSettingsStore } from "@stores";
 import gsap from "gsap";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-import { EDUCATION_TIMELINE, WORK_TIMELINE } from "@constants";
 import { WorkTimelinePoint } from "@types";
 
 const onTextSync = (text: { material?: THREE.Material }) => {
@@ -95,9 +94,13 @@ const Timeline = ({ progress }: { progress: number }) => {
   const { camera, size } = useThree();
   const isMobile = size.width < 768;
   const isActive = usePortalStore((state) => state.activePortalId === 'work');
-  const timeline = useMemo(() => [...WORK_TIMELINE, ...EDUCATION_TIMELINE], []);
-  const educationStartIndex = WORK_TIMELINE.length;
-  const educationMarkerZ = (WORK_TIMELINE[WORK_TIMELINE.length - 1].point.z + EDUCATION_TIMELINE[0].point.z) / 2;
+  const workTimeline = useSettingsStore((s) => s.workTimeline);
+  const educationTimeline = useSettingsStore((s) => s.educationTimeline);
+  const timeline = useMemo(() => [...workTimeline, ...educationTimeline], [workTimeline, educationTimeline]);
+  const educationStartIndex = workTimeline.length;
+  const educationMarkerZ = workTimeline.length > 0 && educationTimeline.length > 0
+    ? (workTimeline[workTimeline.length - 1].point.z + educationTimeline[0].point.z) / 2
+    : 0;
 
   const curve = useMemo(() => new THREE.CatmullRomCurve3(timeline.map(p => p.point), false), [timeline]);
   const curvePoints = useMemo(() => curve.getPoints(500), [curve]);

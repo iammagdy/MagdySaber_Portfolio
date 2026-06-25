@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { FOOTER_LINKS } from "../../constants";
+import { useSettingsStore } from "@stores";
 import { FooterLink } from "../../types";
 import { MOBILE_BREAKPOINT } from "../../hooks/useBreakpoint";
 import { track } from "../../lib/devkitTracker";
@@ -132,11 +132,14 @@ const Footer = () => {
   });
 
   // Wider spacing on mobile so the bigger hit-planes don't overlap.
+  const footerLinks = useSettingsStore((s) => s.footerLinks);
+  const siteVersion = useSettingsStore((s) => s.siteVersion);
+
   const spacing = isMobile ? 1.4 : 2;
-  const centerOffset = -((FOOTER_LINKS.length - 1) * spacing) / 2;
+  const centerOffset = -((footerLinks.length - 1) * spacing) / 2;
 
   const getLinks = () => {
-    return FOOTER_LINKS.map((link, i) => {
+    return footerLinks.map((link, i) => {
       return (
         <group key={i} position={[i * spacing, 0, 0]}>
           <FooterLinkItem link={link} isMobile={isMobile} />
@@ -148,7 +151,7 @@ const Footer = () => {
   // Show only the marketing version (e.g. "v1.8"), trimming a trailing ".0" patch
   // so the footer stays clean. Full version + commit are still in the page title
   // attribute and the build artifacts for debugging.
-  const shortVersion = __APP_VERSION__.replace(/\.0$/, '');
+  const shortVersion = (siteVersion || __APP_VERSION__).replace(/\.0$/, '');
   const versionLabel = `v${shortVersion}`;
   const versionFontSize = isMobile ? 0.14 : 0.16;
   const versionOffsetY = isMobile ? -0.4 : -0.4;

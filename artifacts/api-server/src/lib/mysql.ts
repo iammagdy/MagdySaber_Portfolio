@@ -100,6 +100,14 @@ const getMysqlPool = async (): Promise<DevkitPool> => {
         UNIQUE KEY uk_cred_id (credential_id(255))
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+    await created.query(`
+      CREATE TABLE IF NOT EXISTS site_settings (
+        section VARCHAR(64) NOT NULL,
+        data JSON NOT NULL,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (section)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
     mysqlPool = created;
     logger.info({ host: process.env.HOSTINGER_DB_HOST }, "Devkit MySQL: connected and schema ensured");
   })();
@@ -176,6 +184,13 @@ const getPgPool = async (): Promise<DevkitPool> => {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+  await created.query(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      section VARCHAR(64) PRIMARY KEY,
+      data JSONB NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
   pgPool = created;
   logger.info("devkit postgres pool ready");
   return wrapPg(pgPool);
@@ -204,6 +219,11 @@ const toPostgres = (sql: string): string => {
   );
   // FROM (SELECT 1) t  →  FROM (SELECT 1) AS t(v)
   s = s.replace(/FROM\s+\(SELECT\s+1\)\s+(\w+)/gi, "FROM (SELECT 1) AS $1(v)");
+  // ON DUPLICATE KEY UPDATE data = VALUES(data) → ON CONFLICT (section) DO UPDATE SET data = EXCLUDED.data
+  s = s.replace(
+    /ON\s+DUPLICATE\s+KEY\s+UPDATE\s+(\w+)\s*=\s*VALUES\(\1\)/gi,
+    "ON CONFLICT (section) DO UPDATE SET $1 = EXCLUDED.$1",
+  );
   // TIMESTAMPDIFF(SECOND, a, b) → EXTRACT(EPOCH FROM (b - a))
   s = s.replace(
     /TIMESTAMPDIFF\s*\(\s*SECOND\s*,\s*([^,]+?)\s*,\s*([^)]+?)\s*\)/gi,

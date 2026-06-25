@@ -639,4 +639,84 @@ router.get("/devkit/export.csv", requireDevkitAuth, async (req, res) => {
   }
 });
 
+// ─── Site Settings ───────────────────────────────────────────────────────────
+const VALID_SECTIONS = new Set([
+  "footer_links", "projects", "work_timeline", "education_timeline", "site_version",
+]);
+
+// Public read — no auth, cached 60s by the browser
+router.get("/public/site-settings", async (_req, res) => {
+  try {
+    const pool = await getPool();
+    const { rows } = await pool.query(
+      `SELECT section, data FROM site_settings`,
+    );
+    const out: Record<string, unknown> = {};
+    for (const r of rows as Array<{ section: string; data: unknown }>) {
+      out[r.section] = r.data;
+    }
+    res.set("Cache-Control", "public, max-age=60");
+    res.json(out);
+  } catch (err) {
+    logger.error({ err }, "site-settings public read failed");
+    res.status(500).json({ error: "failed" });
+  }
+});
+
+// Authed read all
+router.get("/devkit/settings", requireDevkitAuth, async (_req, res) => {
+  try {
+    const pool = await getPool();
+    const { rows } = await pool.query(
+      `SELECT section, data, updated_at FROM site_settings`,
+    );
+    const out: Record<string, { data: unknown; updated_at: string }> = {};
+    for (const r of rows as Array<{ section: string; data: unknown; updated_at: string }>) {
+      out[r.section] = { data: r.data, updated_at: r.updated_at };
+    }
+    res.json(out);
+  } catch (err) {
+    logger.error({ err }, "site-settings read failed");
+    res.status(500).json({ error: "failed" });
+  }
+});
+
+// Authed upsert a section
+router.put("/devkit/settings/:section", requireDevkitAuth, async (req, res) => {
+  const section = req.params.section as string;
+  if (!VALID_SECTIONS.has(section)) {
+    res.status(400).json({ error: "invalid section" });
+    return;
+  }
+  try {
+    const pool = await getPool();
+    await pool.execute(
+      `INSERT INTO site_settings (section, data) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE data = VALUES(data)`,
+      [section, JSON.stringify(req.body?.data ?? null)],
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, "site-settings upsert failed");
+    res.status(500).json({ error: "failed" });
+  }
+});
+
+// Authed delete a section (revert to hardcoded)
+router.delete("/devkit/settings/:section", requireDevkitAuth, async (req, res) => {
+  const section = req.params.section as string;
+  if (!VALID_SECTIONS.has(section)) {
+    res.status(400).json({ error: "invalid section" });
+    return;
+  }
+  try {
+    const pool = await getPool();
+    await pool.execute(`DELETE FROM site_settings WHERE section = ?`, [section]);
+    res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, "site-settings delete failed");
+    res.status(500).json({ error: "failed" });
+  }
+});
+
 export default router;
