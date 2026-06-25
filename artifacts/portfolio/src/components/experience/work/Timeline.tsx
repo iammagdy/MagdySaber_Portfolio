@@ -103,7 +103,7 @@ const Timeline = ({ progress }: { progress: number }) => {
     : 0;
 
   const curve = useMemo(() => new THREE.CatmullRomCurve3(timeline.map(p => p.point), false), [timeline]);
-  const curvePoints = useMemo(() => curve.getPoints(500), [curve]);
+  const curvePoints = useMemo(() => curve.getPoints(200), [curve]);
   const visibleCurvePoints = useMemo(() => curvePoints.slice(0, Math.max(1, Math.ceil(progress * curvePoints.length))), [curvePoints, progress]);
   const activeIndex = progress * (timeline.length - 1);
   const visibleTimelinePoints = useMemo(() => {

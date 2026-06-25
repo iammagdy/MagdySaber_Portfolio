@@ -74,14 +74,14 @@ const CanvasLoader = (props: { children: React.ReactNode }) => {
           style={canvasStyle}
           ref={canvasRef}
           gl={{ antialias: true, toneMappingExposure: 1.05 }}
-          dpr={[1, 2]}>
+          dpr={[1, 1.5]}>
           <Suspense fallback={null}>
             {/* Soft IBL for the window's physical material. */}
             <Environment preset="sunset" environmentIntensity={0.45} background={false} />
             <ambientLight intensity={0.55} />
             <directionalLight position={[-6, 4, 8]} intensity={0.35} color={'#cfe6ff'} />
 
-            <ScrollControls pages={4} damping={0.4} maxSpeed={1} distance={1} style={{ zIndex: 1 }}>
+            <ScrollControls pages={4} damping={0.25} maxSpeed={1} distance={1} style={{ zIndex: 1 }}>
               {props.children}
               <Preloader />
             </ScrollControls>

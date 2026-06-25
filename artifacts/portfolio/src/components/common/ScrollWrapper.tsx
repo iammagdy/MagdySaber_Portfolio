@@ -2,6 +2,7 @@
 
 import { useScroll } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
+import { useRef } from "react";
 import * as THREE from "three";
 
 import { usePortalStore, useScrollStore } from "@stores";
@@ -13,6 +14,7 @@ const ScrollWrapper = (props: { children: React.ReactNode | React.ReactNode[]}) 
   const data = useScroll();
   const isActive = usePortalStore((state) => !!state.activePortalId);
   const setScrollProgress = useScrollStore((state) => state.setScrollProgress);
+  const lastProgressRef = useRef(-1);
 
   useFrame((state, delta) => {
     if (data) {
@@ -30,7 +32,13 @@ const ScrollWrapper = (props: { children: React.ReactNode | React.ReactNode[]}) 
         camera.position.y = THREE.MathUtils.damp(camera.position.y, -37 * b, 7, delta);
         camera.position.z = THREE.MathUtils.damp(camera.position.z, 5 + 10 * d, 7, delta);
 
-        setScrollProgress(data.range(0, 1));
+        // Throttle store updates — only write when progress changes by >0.005
+        // to avoid triggering React re-renders (Timeline etc.) every frame.
+        const p = data.range(0, 1);
+        if (Math.abs(p - lastProgressRef.current) > 0.005) {
+          lastProgressRef.current = p;
+          setScrollProgress(p);
+        }
       }
 
       // Move camera slightly on mouse movement.

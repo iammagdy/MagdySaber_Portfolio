@@ -127,7 +127,10 @@ const Footer = () => {
   useFrame(() => {
     const d = data.range(0.8, 0.2);
     if (groupRef.current) {
-      groupRef.current.visible = d > 0;
+      const shouldShow = d > 0;
+      if (groupRef.current.visible !== shouldShow) {
+        groupRef.current.visible = shouldShow;
+      }
     }
   });
 
