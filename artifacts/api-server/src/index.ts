@@ -1,3 +1,23 @@
+// Minimal .env loader — reads key='value' pairs from a .env file and sets
+// them on process.env if not already set. On Hostinger the file lives at
+// .builds/config/.env (relative to public_html); locally it's just ./.env.
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+for (const candidate of [
+  resolve(process.cwd(), ".env"),
+  resolve(process.cwd(), "../public_html/.builds/config/.env"),
+  resolve(process.cwd(), "../../public_html/.builds/config/.env"),
+]) {
+  try {
+    const raw = readFileSync(candidate, "utf8");
+    for (const line of raw.split("\n")) {
+      const m = line.match(/^([A-Z_]+)\s*=\s*'(.*)'\s*$/);
+      if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+    }
+    break;
+  } catch { /* file not found, try next */ }
+}
+
 // Plain-stdout boot banner so hosts that don't capture pino output (e.g. some
 // shared-hosting Node panels) still see something on cold start.
 // eslint-disable-next-line no-console

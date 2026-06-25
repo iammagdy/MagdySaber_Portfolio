@@ -42,6 +42,8 @@ app.use(
       if (!origin) return cb(null, true);
       if (allowedOrigins.length === 0) return cb(null, true);
       if (allowedOrigins.includes(origin)) return cb(null, true);
+      // Allow localhost dev servers regardless of ALLOWED_ORIGINS
+      if (/^http:\/\/localhost:\d+$/.test(origin)) return cb(null, true);
       return cb(new Error("Not allowed by CORS"));
     },
   }),
