@@ -653,7 +653,9 @@ router.get("/public/site-settings", async (_req, res) => {
     );
     const out: Record<string, unknown> = {};
     for (const r of rows as Array<{ section: string; data: unknown }>) {
-      out[r.section] = r.data;
+      let val = r.data;
+      if (typeof val === "string") { try { val = JSON.parse(val); } catch { /* keep raw */ } }
+      out[r.section] = val;
     }
     res.set("Cache-Control", "public, max-age=60");
     res.json(out);
@@ -672,7 +674,9 @@ router.get("/devkit/settings", requireDevkitAuth, async (_req, res) => {
     );
     const out: Record<string, { data: unknown; updated_at: string }> = {};
     for (const r of rows as Array<{ section: string; data: unknown; updated_at: string }>) {
-      out[r.section] = { data: r.data, updated_at: r.updated_at };
+      let val = r.data;
+      if (typeof val === "string") { try { val = JSON.parse(val); } catch { /* keep raw */ } }
+      out[r.section] = { data: val, updated_at: r.updated_at };
     }
     res.json(out);
   } catch (err) {

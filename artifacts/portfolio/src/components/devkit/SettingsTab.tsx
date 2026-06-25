@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useSettingsStore } from "../../stores/settingsStore";
+import { FOOTER_LINKS, PROJECTS, WORK_TIMELINE, EDUCATION_TIMELINE } from "../../constants";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 const apiUrl = (path: string) => `${API_BASE}${path}`;
@@ -11,6 +13,21 @@ interface TimelinePointData { year: string; title: string; subtitle?: string; de
 
 type Section = "footer_links" | "projects" | "work_timeline" | "education_timeline" | "site_version";
 
+// Convert hardcoded constants to editable format (strip THREE.Vector3 etc.)
+const defaultFooterLinks: FooterLinkData[] = FOOTER_LINKS.map(f => ({ ...f }));
+const defaultProjects: ProjectData[] = PROJECTS.map(p => ({
+  title: p.title,
+  date: p.date,
+  subtext: p.subtext,
+  urls: (p.urls ?? []).map(u => ({ ...u })),
+}));
+const defaultWorkTimeline: TimelinePointData[] = WORK_TIMELINE.map(t => ({
+  year: t.year, title: t.title, subtitle: t.subtitle, description: t.description, position: t.position,
+}));
+const defaultEducationTimeline: TimelinePointData[] = EDUCATION_TIMELINE.map(t => ({
+  year: t.year, title: t.title, subtitle: t.subtitle, description: t.description, position: t.position,
+}));
+
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
 const inputCls = "w-full bg-black border border-neutral-800 text-white px-2.5 py-2 font-vercetti text-xs focus:outline-none focus:border-neutral-500 transition-colors rounded-sm";
 const labelCls = "font-vercetti text-[9px] uppercase tracking-widest text-neutral-600 mb-1 block";
@@ -19,10 +36,13 @@ const btnDangerCls = "border border-red-900/80 text-red-500 px-2.5 py-1.5 font-v
 const btnPrimaryCls = "border border-neutral-300 text-white px-3 py-1.5 font-vercetti text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition-colors rounded-sm";
 const cardCls = "bg-neutral-950 border border-neutral-800 rounded-sm p-4 space-y-3";
 
-function SectionHeader({ title, onSave, saving, onReset }: { title: string; onSave: () => void; saving: boolean; onReset?: () => void }) {
+function SectionHeader({ title, onSave, saving, onReset, hasOverride }: { title: string; onSave: () => void; saving: boolean; onReset?: () => void; hasOverride: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <h2 className="font-soria text-lg text-white">{title}</h2>
+      <div className="flex items-center gap-2">
+        <h2 className="font-soria text-lg text-white">{title}</h2>
+        {hasOverride && <span className="font-vercetti text-[8px] uppercase tracking-widest text-emerald-500 border border-emerald-900 px-1.5 py-0.5 rounded-sm">DB</span>}
+      </div>
       <div className="flex items-center gap-1.5">
         {onReset && <button onClick={onReset} className={btnDangerCls}>Reset</button>}
         <button onClick={onSave} disabled={saving} className={btnPrimaryCls}>{saving ? "Saving…" : "Save"}</button>
@@ -31,17 +51,29 @@ function SectionHeader({ title, onSave, saving, onReset }: { title: string; onSa
   );
 }
 
+// ─── Fetch helper ─────────────────────────────────────────────────────────────
+async function fetchAllSettings(): Promise<Record<string, unknown>> {
+  const r = await fetch(apiUrl("/api/devkit/settings"), { credentials: "include" });
+  if (!r.ok) return {};
+  const d = await r.json() as Record<string, { data: unknown }>;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(d)) {
+    out[k] = v.data;
+  }
+  return out;
+}
+
 // ─── Footer Links Editor ──────────────────────────────────────────────────────
-function FooterLinksEditor() {
-  const [items, setItems] = useState<FooterLinkData[]>([]);
+function FooterLinksEditor({ onSaved }: { onSaved: () => void }) {
+  const [items, setItems] = useState<FooterLinkData[]>(defaultFooterLinks);
   const [saving, setSaving] = useState(false);
+  const [hasOverride, setHasOverride] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(apiUrl("/api/devkit/settings"), { credentials: "include" })
-      .then(r => r.json())
-      .then((d: Record<string, { data: unknown }>) => {
-        if (d.footer_links?.data) setItems(d.footer_links.data as FooterLinkData[]);
+    fetchAllSettings()
+      .then((d) => {
+        if (Array.isArray(d.footer_links)) { setItems(d.footer_links as FooterLinkData[]); setHasOverride(true); }
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
@@ -69,7 +101,7 @@ function FooterLinksEditor() {
         method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
         body: JSON.stringify({ data: items }),
       });
-      if (!r.ok) alert("Save failed");
+      if (r.ok) { setHasOverride(true); onSaved(); } else alert("Save failed");
     } catch { alert("Network error"); } finally { setSaving(false); }
   };
 
@@ -77,7 +109,7 @@ function FooterLinksEditor() {
     if (!confirm("Reset footer links to hardcoded defaults?")) return;
     try {
       await fetch(apiUrl("/api/devkit/settings/footer_links"), { method: "DELETE", credentials: "include" });
-      setItems([]);
+      setItems(defaultFooterLinks); setHasOverride(false); onSaved();
     } catch { alert("Reset failed"); }
   };
 
@@ -85,8 +117,7 @@ function FooterLinksEditor() {
 
   return (
     <div className={cardCls}>
-      <SectionHeader title="Footer Links" onSave={save} saving={saving} onReset={reset} />
-      {items.length === 0 && <p className="font-vercetti text-[10px] text-neutral-600">No overrides — using hardcoded defaults. Add a link to override.</p>}
+      <SectionHeader title="Footer Links" onSave={save} saving={saving} onReset={reset} hasOverride={hasOverride} />
       {items.map((item, i) => (
         <div key={i} className="border border-neutral-900 rounded-sm p-3 space-y-2">
           <div className="flex items-center justify-between">
@@ -111,16 +142,16 @@ function FooterLinksEditor() {
 }
 
 // ─── Projects Editor ──────────────────────────────────────────────────────────
-function ProjectsEditor() {
-  const [items, setItems] = useState<ProjectData[]>([]);
+function ProjectsEditor({ onSaved }: { onSaved: () => void }) {
+  const [items, setItems] = useState<ProjectData[]>(defaultProjects);
   const [saving, setSaving] = useState(false);
+  const [hasOverride, setHasOverride] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(apiUrl("/api/devkit/settings"), { credentials: "include" })
-      .then(r => r.json())
-      .then((d: Record<string, { data: unknown }>) => {
-        if (d.projects?.data) setItems(d.projects.data as ProjectData[]);
+    fetchAllSettings()
+      .then((d) => {
+        if (Array.isArray(d.projects)) { setItems(d.projects as ProjectData[]); setHasOverride(true); }
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
@@ -161,7 +192,7 @@ function ProjectsEditor() {
         method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
         body: JSON.stringify({ data: items }),
       });
-      if (!r.ok) alert("Save failed");
+      if (r.ok) { setHasOverride(true); onSaved(); } else alert("Save failed");
     } catch { alert("Network error"); } finally { setSaving(false); }
   };
 
@@ -169,7 +200,7 @@ function ProjectsEditor() {
     if (!confirm("Reset projects to hardcoded defaults?")) return;
     try {
       await fetch(apiUrl("/api/devkit/settings/projects"), { method: "DELETE", credentials: "include" });
-      setItems([]);
+      setItems(defaultProjects); setHasOverride(false); onSaved();
     } catch { alert("Reset failed"); }
   };
 
@@ -177,8 +208,7 @@ function ProjectsEditor() {
 
   return (
     <div className={cardCls}>
-      <SectionHeader title="Projects" onSave={save} saving={saving} onReset={reset} />
-      {items.length === 0 && <p className="font-vercetti text-[10px] text-neutral-600">No overrides — using hardcoded defaults. Add a project to override.</p>}
+      <SectionHeader title="Projects" onSave={save} saving={saving} onReset={reset} hasOverride={hasOverride} />
       {items.map((item, i) => (
         <div key={i} className="border border-neutral-900 rounded-sm p-3 space-y-2">
           <div className="flex items-center justify-between">
@@ -216,16 +246,16 @@ function ProjectsEditor() {
 }
 
 // ─── Timeline Editor ──────────────────────────────────────────────────────────
-function TimelineEditor({ section, title }: { section: Section; title: string }) {
-  const [items, setItems] = useState<TimelinePointData[]>([]);
+function TimelineEditor({ section, title, defaults, onSaved }: { section: Section; title: string; defaults: TimelinePointData[]; onSaved: () => void }) {
+  const [items, setItems] = useState<TimelinePointData[]>(defaults);
   const [saving, setSaving] = useState(false);
+  const [hasOverride, setHasOverride] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(apiUrl("/api/devkit/settings"), { credentials: "include" })
-      .then(r => r.json())
-      .then((d: Record<string, { data: unknown }>) => {
-        if (d[section]?.data) setItems(d[section].data as TimelinePointData[]);
+    fetchAllSettings()
+      .then((d) => {
+        if (Array.isArray(d[section])) { setItems(d[section] as TimelinePointData[]); setHasOverride(true); }
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
@@ -253,7 +283,7 @@ function TimelineEditor({ section, title }: { section: Section; title: string })
         method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
         body: JSON.stringify({ data: items }),
       });
-      if (!r.ok) alert("Save failed");
+      if (r.ok) { setHasOverride(true); onSaved(); } else alert("Save failed");
     } catch { alert("Network error"); } finally { setSaving(false); }
   };
 
@@ -261,7 +291,7 @@ function TimelineEditor({ section, title }: { section: Section; title: string })
     if (!confirm(`Reset ${title} to hardcoded defaults?`)) return;
     try {
       await fetch(apiUrl(`/api/devkit/settings/${section}`), { method: "DELETE", credentials: "include" });
-      setItems([]);
+      setItems(defaults); setHasOverride(false); onSaved();
     } catch { alert("Reset failed"); }
   };
 
@@ -269,8 +299,7 @@ function TimelineEditor({ section, title }: { section: Section; title: string })
 
   return (
     <div className={cardCls}>
-      <SectionHeader title={title} onSave={save} saving={saving} onReset={reset} />
-      {items.length === 0 && <p className="font-vercetti text-[10px] text-neutral-600">No overrides — using hardcoded defaults. Add an entry to override.</p>}
+      <SectionHeader title={title} onSave={save} saving={saving} onReset={reset} hasOverride={hasOverride} />
       {items.map((item, i) => (
         <div key={i} className="border border-neutral-900 rounded-sm p-3 space-y-2">
           <div className="flex items-center justify-between">
@@ -302,16 +331,17 @@ function TimelineEditor({ section, title }: { section: Section; title: string })
 }
 
 // ─── Site Version Editor ──────────────────────────────────────────────────────
-function SiteVersionEditor() {
-  const [version, setVersion] = useState("");
+function SiteVersionEditor({ onSaved }: { onSaved: () => void }) {
+  const fallbackVersion = __APP_VERSION__.replace(/\.0$/, "");
+  const [version, setVersion] = useState(fallbackVersion);
   const [saving, setSaving] = useState(false);
+  const [hasOverride, setHasOverride] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(apiUrl("/api/devkit/settings"), { credentials: "include" })
-      .then(r => r.json())
-      .then((d: Record<string, { data: unknown }>) => {
-        if (d.site_version?.data) setVersion(d.site_version.data as string);
+    fetchAllSettings()
+      .then((d) => {
+        if (typeof d.site_version === "string") { setVersion(d.site_version); setHasOverride(true); }
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
@@ -324,7 +354,7 @@ function SiteVersionEditor() {
         method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
         body: JSON.stringify({ data: version }),
       });
-      if (!r.ok) alert("Save failed");
+      if (r.ok) { setHasOverride(true); onSaved(); } else alert("Save failed");
     } catch { alert("Network error"); } finally { setSaving(false); }
   };
 
@@ -332,7 +362,7 @@ function SiteVersionEditor() {
     if (!confirm("Reset version to package.json default?")) return;
     try {
       await fetch(apiUrl("/api/devkit/settings/site_version"), { method: "DELETE", credentials: "include" });
-      setVersion("");
+      setVersion(fallbackVersion); setHasOverride(false); onSaved();
     } catch { alert("Reset failed"); }
   };
 
@@ -340,8 +370,7 @@ function SiteVersionEditor() {
 
   return (
     <div className={cardCls}>
-      <SectionHeader title="Site Version" onSave={save} saving={saving} onReset={reset} />
-      {version === "" && <p className="font-vercetti text-[10px] text-neutral-600">No override — using package.json version. Enter a version to override.</p>}
+      <SectionHeader title="Site Version" onSave={save} saving={saving} onReset={reset} hasOverride={hasOverride} />
       <div>
         <label className={labelCls}>Version (e.g. 1.14)</label>
         <input className={inputCls} value={version} onChange={e => setVersion(e.target.value)} placeholder="e.g. 1.14" />
@@ -352,19 +381,26 @@ function SiteVersionEditor() {
 
 // ─── Main Settings Tab ────────────────────────────────────────────────────────
 const SettingsTab = () => {
+  const fetchSettings = useSettingsStore((s) => s.fetchSettings);
+
+  const onSaved = useCallback(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
   return (
     <div className="space-y-5">
       <div className="bg-neutral-950 border border-neutral-800 rounded-sm p-4">
         <p className="font-vercetti text-[10px] text-neutral-500 leading-relaxed">
-          Manage site content from the database. Changes take effect on the next page load.
-          If a section has no override, the hardcoded defaults are used.
+          Manage site content from the database. Editors are pre-populated with current hardcoded defaults.
+          Save to override in the DB (green <span className="text-emerald-500">DB</span> badge = active override).
+          Reset to revert to hardcoded defaults. Changes reflect on the home page on next load.
         </p>
       </div>
-      <SiteVersionEditor />
-      <FooterLinksEditor />
-      <ProjectsEditor />
-      <TimelineEditor section="work_timeline" title="Work Timeline" />
-      <TimelineEditor section="education_timeline" title="Education Timeline" />
+      <SiteVersionEditor onSaved={onSaved} />
+      <FooterLinksEditor onSaved={onSaved} />
+      <ProjectsEditor onSaved={onSaved} />
+      <TimelineEditor section="work_timeline" title="Work Timeline" defaults={defaultWorkTimeline} onSaved={onSaved} />
+      <TimelineEditor section="education_timeline" title="Education Timeline" defaults={defaultEducationTimeline} onSaved={onSaved} />
     </div>
   );
 };
