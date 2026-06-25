@@ -511,22 +511,19 @@ const DevkitPage = () => {
           {biometricState === "done" && (
             <div className="font-vercetti text-[10px] text-emerald-400">Biometric enabled — use Face ID / Touch ID next time you log in.</div>
           )}
+          {/* ── Tab switcher ─────────────────────────────────────────────── */}
+          <div className="flex items-center gap-1.5 pt-1">
+            <button onClick={() => setView("analytics")}
+              className={`shrink-0 border px-3 py-1 font-vercetti text-[10px] uppercase tracking-widest transition-colors rounded-sm ${view === "analytics" ? "border-neutral-300 text-white bg-neutral-800" : "border-neutral-800 text-neutral-500 hover:text-white"}`}>
+              Analytics
+            </button>
+            <button onClick={() => setView("settings")}
+              className={`shrink-0 border px-3 py-1 font-vercetti text-[10px] uppercase tracking-widest transition-colors rounded-sm ${view === "settings" ? "border-neutral-300 text-white bg-neutral-800" : "border-neutral-800 text-neutral-500 hover:text-white"}`}>
+              Settings
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* ── Tab switcher ─────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1.5 pt-1">
-        <button onClick={() => setView("analytics")}
-          className={`shrink-0 border px-3 py-1 font-vercetti text-[10px] uppercase tracking-widest transition-colors rounded-sm ${view === "analytics" ? "border-neutral-300 text-white bg-neutral-800" : "border-neutral-800 text-neutral-500 hover:text-white"}`}>
-          Analytics
-        </button>
-        <button onClick={() => setView("settings")}
-          className={`shrink-0 border px-3 py-1 font-vercetti text-[10px] uppercase tracking-widest transition-colors rounded-sm ${view === "settings" ? "border-neutral-300 text-white bg-neutral-800" : "border-neutral-800 text-neutral-500 hover:text-white"}`}>
-          Settings
-        </button>
-      </div>
-    </div>
-  </div>
 
       {view === "settings" ? (
         <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6">
