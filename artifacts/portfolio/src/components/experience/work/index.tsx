@@ -1,12 +1,11 @@
 import { ScrollControls, useTexture } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { usePortalStore, useScrollStore } from "@stores";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Memory } from "../../models/Memory";
 import Timeline from "./Timeline";
 import { MOBILE_BREAKPOINT } from "../../../hooks/useBreakpoint";
-import { useScrollNear } from "../../../hooks/useScrollNear";
 
 const MemoryTile = () => {
   const texture = useTexture('/images/memory-tile.png');
@@ -23,10 +22,18 @@ const Work = () => {
   const isMobile = size.width < MOBILE_BREAKPOINT;
   const isActive = usePortalStore((state) => state.activePortalId === 'work');
   const { scrollProgress, setScrollProgress } = useScrollStore();
-  // Defer the Dali GLB until the visitor has scrolled near the experience
-  // section, or the portal has been opened.
-  const inRange = useScrollNear(0.4);
-  const shouldRenderModel = inRange || isActive;
+  const [showModel, setShowModel] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isActive) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setShowModel(true);
+    } else if (showModel) {
+      timerRef.current = setTimeout(() => setShowModel(false), 1200);
+    }
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [isActive]);
 
   const handleScroll = (event: Event) => {
     const target = event.target as HTMLElement;
@@ -82,7 +89,7 @@ const Work = () => {
         !isActive ? <MemoryTile /> : null
       ) : (
         <ScrollControls style={{ zIndex: -1}} pages={7} maxSpeed={0.25}>
-          {shouldRenderModel ? (
+          {showModel ? (
             <Suspense fallback={null}>
               <Memory scale={new THREE.Vector3(5, 5, 5)} position={new THREE.Vector3(0, -6, 1)}/>
             </Suspense>
