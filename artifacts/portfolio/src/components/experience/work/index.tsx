@@ -21,7 +21,11 @@ const Work = () => {
   const { size } = useThree();
   const isMobile = size.width < MOBILE_BREAKPOINT;
   const isActive = usePortalStore((state) => state.activePortalId === 'work');
-  const { scrollProgress, setScrollProgress } = useScrollStore();
+  // Subscribe with selectors so this component doesn't re-render on every
+  // scroll-progress update while the visitor scrolls the landing page.
+  // Progress is only consumed while this portal is active.
+  const scrollProgress = useScrollStore((s) => (isActive ? s.scrollProgress : 0));
+  const setScrollProgress = useScrollStore((s) => s.setScrollProgress);
   const [showModel, setShowModel] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { usePortalStore, useScrollStore } from '@stores';
 
 const SECTIONS = ['Hero', 'Experience', 'Projects', 'Contact'];
@@ -6,17 +5,12 @@ const SECTIONS = ['Hero', 'Experience', 'Projects', 'Contact'];
 const SectionIndicator = () => {
   const scrollProgress = useScrollStore((s) => s.scrollProgress);
   const portalActive = usePortalStore((s) => !!s.activePortalId);
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    setProgress(scrollProgress);
-  }, [scrollProgress]);
 
   if (portalActive) return null;
 
   const activeIndex = Math.min(
     SECTIONS.length - 1,
-    Math.floor(progress * SECTIONS.length + 0.001),
+    Math.floor(scrollProgress * SECTIONS.length + 0.001),
   );
 
   return (

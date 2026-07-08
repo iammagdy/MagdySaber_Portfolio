@@ -3,7 +3,7 @@ import { Edges, MeshPortalMaterial, Text, TextProps, useScroll } from '@react-th
 import { useFrame, useThree } from '@react-three/fiber';
 import { usePortalStore } from '@stores';
 import gsap from "gsap";
-import { useEffect, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { MOBILE_BREAKPOINT } from '../../hooks/useBreakpoint';
 
@@ -26,11 +26,14 @@ const GridTile = (props: GridTileProps) => {
   const { camera, size, gl } = useThree();
   const isMobile = size.width < MOBILE_BREAKPOINT;
   // Scale portal FBO with the device pixel ratio so retina displays get
-  // crisp portal scenes; capped to 2048 to keep memory in check.
+  // crisp portal scenes; capped (1024 mobile / 2048 desktop) to keep
+  // per-frame fill-rate and memory in check.
   const portalResolution = useMemo(() => {
     const dpr = typeof gl?.getPixelRatio === 'function' ? gl.getPixelRatio() : 1;
-    return Math.min(2048, Math.round(1024 * Math.max(1, dpr)));
-  }, [gl]);
+    const base = isMobile ? 512 : 1024;
+    const cap = isMobile ? 1024 : 2048;
+    return Math.min(cap, Math.round(base * Math.max(1, dpr)));
+  }, [gl, isMobile]);
   const setActivePortal = usePortalStore((state) => state.setActivePortal);
   const isActive = usePortalStore((state) => state.activePortalId === id);
   const activePortalId = usePortalStore((state) => state.activePortalId);
@@ -55,11 +58,23 @@ const GridTile = (props: GridTileProps) => {
     }
   }, [isMobile]);
 
+  // Defer mounting the portal scene until the visitor approaches the
+  // experience section. MeshPortalMaterial renders its children into an
+  // FBO every frame, so without this gate both portal scenes (Work +
+  // Projects) were rendered off-screen during the entire hero scroll,
+  // causing lag before the window/door even appeared.
+  const [portalReady, setPortalReady] = useState(false);
+  const portalReadyRef = useRef(false);
+
   useFrame(() => {
     const d = data.range(0.95, 0.05);
     if (isMobile && titleRef.current) {
       /* eslint-disable  @typescript-eslint/no-explicit-any */
       (titleRef.current as any).fillOpacity = d;
+    }
+    if (!portalReadyRef.current && data.offset > 0.55) {
+      portalReadyRef.current = true;
+      setPortalReady(true);
     }
   });
 
@@ -154,7 +169,11 @@ const GridTile = (props: GridTileProps) => {
       </group>
       <MeshPortalMaterial ref={portalRef} blend={0} resolution={portalResolution} blur={0}>
         <color attach="background" args={[color]} />
-        {children}
+        {(portalReady || isActive) && (
+          <Suspense fallback={null}>
+            {children}
+          </Suspense>
+        )}
       </MeshPortalMaterial>
     </mesh>
   );
