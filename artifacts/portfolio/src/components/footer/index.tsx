@@ -158,17 +158,39 @@ const Footer = () => {
   const versionLabel = `v${shortVersion}`;
   const versionFontSize = isMobile ? 0.14 : 0.16;
   const versionOffsetY = isMobile ? -0.4 : -0.4;
+  const contentLift = isMobile ? 1.6 : 2.2;
 
   return (
     <group position={[0, -44, 18]} rotation={[-Math.PI / 2, 0, 0]} ref={groupRef}>
-      <group position={[centerOffset, 0, 0]}>
+      <Text
+        font="./soria-font.ttf"
+        fontSize={isMobile ? 0.48 : 0.7}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        position={[0, 0, contentLift + 0.9]}
+      >
+        LET&apos;S CONNECT
+      </Text>
+      <Text
+        font="./Vercetti-Regular.woff"
+        fontSize={isMobile ? 0.14 : 0.18}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        fillOpacity={0.72}
+        position={[0, 0, contentLift + 0.45]}
+      >
+        OPEN TO COLLABORATION AND NEW IDEAS
+      </Text>
+      <group position={[centerOffset, 0, contentLift]}>
         { getLinks() }
       </group>
       <Text
         font="./Vercetti-Regular.woff"
         fontSize={versionFontSize}
         color="white"
-        position={[0, versionOffsetY, 0]}
+        position={[0, versionOffsetY, contentLift - 0.35]}
         anchorX="center"
         anchorY="middle"
         fillOpacity={0.7}

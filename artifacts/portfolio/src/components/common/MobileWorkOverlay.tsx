@@ -74,13 +74,37 @@ const MobileWorkOverlay = () => {
   if (!isMobile || !isActive) return null;
 
   return (
-    <div className="fixed inset-0 z-[5] flex flex-col pointer-events-none">
-      <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] pointer-events-auto" />
+    <div
+      className="fixed inset-0 z-[5] flex flex-col pointer-events-none"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9,
+        display: "flex",
+        flexDirection: "column",
+        pointerEvents: "none",
+      }}
+    >
+      <div
+        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] pointer-events-auto"
+        style={{ position: "absolute", inset: 0, pointerEvents: "auto" }}
+      />
       <div
         ref={scrollRef}
-        className="relative flex-1 overflow-y-auto px-4 pt-20 pb-24 pointer-events-auto"
+        className="relative flex-1 overflow-y-auto px-4 pt-20 pb-24 pointer-events-auto md:px-10"
+        style={{
+          position: "relative",
+          zIndex: 1,
+          flex: "1 1 auto",
+          minHeight: 0,
+          overflowY: "auto",
+          overscrollBehavior: "contain",
+          WebkitOverflowScrolling: "touch",
+          pointerEvents: "auto",
+          padding: "5rem 1rem 6rem",
+        }}
       >
-        <h2 className="font-soria text-white text-2xl text-center mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+        <h2 className="font-soria text-white text-2xl md:text-4xl text-center mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
           Work &amp; Education
         </h2>
         <p className="font-vercetti text-white/70 text-[11px] text-center mb-6 tracking-wider">
@@ -88,7 +112,7 @@ const MobileWorkOverlay = () => {
         </p>
 
         {/* WORK SECTION */}
-        <div className="relative max-w-md mx-auto">
+        <div className="relative max-w-3xl mx-auto">
           <p className="font-vercetti text-white/80 text-[10px] tracking-[0.25em] mb-3 pl-10">
             EXPERIENCE
           </p>
@@ -104,7 +128,7 @@ const MobileWorkOverlay = () => {
         </div>
 
         {/* SECTION DIVIDER */}
-        <div className="max-w-md mx-auto my-8 flex items-center gap-3 px-2">
+        <div className="max-w-3xl mx-auto my-8 flex items-center gap-3 px-2">
           <span className="flex-1 h-px bg-white/30" />
           <span className="font-soria text-white text-sm tracking-widest">
             EDUCATION
@@ -113,7 +137,7 @@ const MobileWorkOverlay = () => {
         </div>
 
         {/* EDUCATION SECTION */}
-        <div className="relative max-w-md mx-auto">
+        <div className="relative max-w-3xl mx-auto">
           <div
             aria-hidden
             className="absolute left-4 top-2 bottom-2 w-px bg-white/40"

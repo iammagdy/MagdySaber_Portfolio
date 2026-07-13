@@ -2,7 +2,13 @@
 import { useEffect, useState } from 'react';
 import { MOBILE_BREAKPOINT } from '../../hooks/useBreakpoint';
 
-const ProgressLoader = ({ progress }: { progress: number }) => {
+const ProgressLoader = ({
+  progress,
+  phase,
+}: {
+  progress: number;
+  phase: 'visible' | 'fading' | 'hidden';
+}) => {
   const strokeWidth = 3;
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
@@ -54,11 +60,24 @@ const ProgressLoader = ({ progress }: { progress: number }) => {
   }
 
   const isMobile = windowSize.width < MOBILE_BREAKPOINT;
+  if (phase === 'hidden') return null;
+
+  const overlayStyle: React.CSSProperties = {
+    boxSizing: 'border-box',
+    zIndex: 20,
+    opacity: phase === 'fading' ? 0 : 1,
+    transition: 'opacity 450ms ease',
+  };
+
   if (isMobile) {
     return (
-      <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
+      <div
+        aria-hidden="true"
+        className="fixed top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none"
+        style={overlayStyle}
+      >
         <div className="relative w-[100px] transition-all duration-500 font-sans font-bold"
-          style={{ opacity: progress === 100 ? 0 : 0.7, fontSize: '0.6rem' }}>
+          style={{ opacity: 0.7, fontSize: '0.6rem' }}>
           <div className='absolute w-[100px] bg-black opacity-30 h-[2px]'/>
           <div
             className="absolute transition-all duration-500 ease-in-out "
@@ -78,8 +97,9 @@ const ProgressLoader = ({ progress }: { progress: number }) => {
   return (
     // Use fixed positioning to overlay the loader
     <div
+      aria-hidden="true"
       className="fixed top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none"
-      style={{ padding: '1rem' }}
+      style={{ ...overlayStyle, padding: '1rem' }}
     >
       <svg
         width={svgWidth} // Use calculated SVG width

@@ -15,6 +15,11 @@ const TextWindow = () => {
     const c = data.range(0.65, 0.15);
 
     if (windowRef.current) {
+      // These labels belong to the opening window only. Once Experience is
+      // on screen they can otherwise enter the camera frustum at huge scale
+      // and overlap the portfolio panels.
+      windowRef.current.visible = data.offset < 0.6;
+      if (!windowRef.current.visible) return;
       windowRef.current.setRotationFromAxisAngle(_rotAxis, 0.5 *Math.PI * c);
       windowRef.current.position.x =  -0.6 * c;
       windowRef.current.position.z = -0.6 * c;

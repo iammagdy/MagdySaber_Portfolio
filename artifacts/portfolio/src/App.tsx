@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import CanvasLoader from "./components/common/CanvasLoader";
+import ContactOverlay from "./components/common/ContactOverlay";
+import ExperienceOverlay from "./components/common/ExperienceOverlay";
 import MobileProjectsOverlay from "./components/common/MobileProjectsOverlay";
 import MobileWorkOverlay from "./components/common/MobileWorkOverlay";
 import MotionPermissionPrompt from "./components/common/MotionPermissionPrompt";
 import ScrollWrapper from "./components/common/ScrollWrapper";
 import Experience from "./components/experience";
-import Footer from "./components/footer";
 import Hero from "./components/hero";
 import DevkitPage from "./components/devkit/DevkitPage";
 import { installTracker } from "./lib/devkitTracker";
@@ -32,9 +33,10 @@ const App = () => {
         <ScrollWrapper>
           <Hero/>
           <Experience/>
-          <Footer/>
         </ScrollWrapper>
       </CanvasLoader>
+      <ExperienceOverlay />
+      <ContactOverlay />
       <MotionPermissionPrompt />
       <MobileProjectsOverlay />
       <MobileWorkOverlay />

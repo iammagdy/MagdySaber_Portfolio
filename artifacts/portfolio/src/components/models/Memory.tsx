@@ -52,5 +52,5 @@ export function Memory(props: JSX.IntrinsicElements['group']) {
   )
 }
 
-useGLTF.preload('models/dalithe_persistence_of_memory.glb');
+// Loaded on demand when the Work portal opens.
 

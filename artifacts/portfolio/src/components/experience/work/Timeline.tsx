@@ -40,8 +40,8 @@ const TimelinePoint = ({ point, diff }: { point: WorkTimelinePoint, diff: number
 
   const hasDescription = !!point.description;
   const panelWidth = 3.6;
-  const panelHeight = hasDescription ? 3.4 : 2.7;
-  const panelCenterY = hasDescription ? -1.35 : -1.0;
+  const panelHeight = hasDescription ? 2.7 : 2.0;
+  const panelCenterY = hasDescription ? -0.9 : -0.65;
   const panelX = point.position === 'left'
     ? -0.3 - panelWidth / 2
     : 0.3 + panelWidth / 2;
@@ -71,17 +71,17 @@ const TimelinePoint = ({ point, diff }: { point: WorkTimelinePoint, diff: number
             depthTest={false}
           />
         </mesh>
-        <Text {...textProps} fontSize={0.28} position={[0, -0.05, 0]}>
+        <Text {...textProps} fontSize={0.28} position={[0, 0, 0]}>
           {point.year}
         </Text>
-        <Text {...titleProps} position={[0, -1.05 - diff / 2, 0]}>
+        <Text {...titleProps} position={[0, -0.78 - diff * 0.18, 0]}>
           {point.title}
         </Text>
-        <Text {...textProps} fontSize={0.2} maxWidth={3.0} position={[0, -2.15 - diff * 0.1, 0]}>
+        <Text {...textProps} fontSize={0.2} maxWidth={3.0} position={[0, -1.35 - diff * 0.05, 0]}>
           {point.subtitle}
         </Text>
         {point.description && (
-          <Text {...textProps} fontSize={0.18} maxWidth={3.0} lineHeight={1.3} textAlign="center" position={[0, -2.75 - diff * 0.1, 0]}>
+          <Text {...textProps} fontSize={0.18} maxWidth={3.0} lineHeight={1.3} textAlign="center" position={[0, -1.95 - diff * 0.05, 0]}>
             {point.description}
           </Text>
         )}
@@ -106,22 +106,34 @@ const Timeline = ({ progress }: { progress: number }) => {
   const curvePoints = useMemo(() => curve.getPoints(200), [curve]);
   const visibleCurvePoints = useMemo(() => curvePoints.slice(0, Math.max(1, Math.ceil(progress * curvePoints.length))), [curvePoints, progress]);
   const activeIndex = progress * (timeline.length - 1);
+  const horizontalFocusIndex = Math.min(
+    timeline.length - 1,
+    Math.max(0, Math.round(activeIndex)),
+  );
+  const cameraFocusPoint = timeline[horizontalFocusIndex]?.point;
   const visibleTimelinePoints = useMemo(() => {
-    const windowRadius = 1.2;
+    // Mount the approaching point while the current point exits. This keeps
+    // the alternating left/right flight intact without a blank hand-off.
+    const windowRadius = 1.05;
     return timeline
       .map((point, i) => ({ point, i }))
-      .filter(({ i }) => i <= activeIndex + 0.05 && Math.abs(i - activeIndex) <= windowRadius);
+      .filter(({ i }) => Math.abs(i - activeIndex) <= windowRadius);
   }, [timeline, activeIndex]);
 
   const [visibleDashedCurvePoints, setVisibleDashedCurvePoints] = useState<THREE.Vector3[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useFrame((_, delta) => {
-    if (isActive) {
+    if (isActive && cameraFocusPoint) {
       const position = curve.getPoint(progress);
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, (isMobile ? 0 : -2) + position.x, 4, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, (isMobile ? -36 : -39) + position.z, 4, delta);
-      camera.position.z = THREE.MathUtils.damp(camera.position.z, 6 - position.y, 4, delta);
+      // The cards react to raw scroll progress, so the camera needs to follow
+      // responsively enough that fast scrolling cannot leave the active card
+      // behind. Lambda 8 remains smooth but halves the visual lag.
+      // Focus the nearest timeline stop horizontally instead of looking at the
+      // empty midpoint between alternating left/right cards.
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, (isMobile ? 0 : -2) + cameraFocusPoint.x, 8, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, (isMobile ? -36 : -39) + position.z, 8, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, 6 - position.y, 8, delta);
     }
   });
 

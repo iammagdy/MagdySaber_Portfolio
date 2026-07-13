@@ -12,9 +12,8 @@ import Preloader from "./Preloader";
 import ProgressLoader from "./ProgressLoader";
 import { ScrollHint } from "./ScrollHint";
 import SectionIndicator from "./SectionIndicator";
-import ThemeSwitcher from "./ThemeSwitcher";
 
-const getResponsiveBorder = (width: number) => {
+const getCanvasBounds = (width: number) => {
   if (width < SMALL_BREAKPOINT) return { inset: 0, width: "100%", height: "100%" };
   if (width < TABLET_BREAKPOINT)
     return { inset: "0.5rem", width: "calc(100% - 1rem)", height: "calc(100% - 1rem)" };
@@ -29,6 +28,8 @@ const CanvasLoader = (props: { children: React.ReactNode }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const backgroundColor = useThemeStore((state) => state.theme.color);
   const { progress } = useProgress();
+  const loaderStartedAt = useRef(Date.now());
+  const [loaderPhase, setLoaderPhase] = useState<"visible" | "fading" | "hidden">("visible");
   const [canvasStyle, setCanvasStyle] = useState<React.CSSProperties>(() => ({
     position: "absolute",
     top: 0,
@@ -37,21 +38,38 @@ const CanvasLoader = (props: { children: React.ReactNode }) => {
     right: 0,
     opacity: 0,
     overflow: "hidden",
-    ...getResponsiveBorder(typeof window !== "undefined" ? window.innerWidth : 1280),
+    ...getCanvasBounds(typeof window !== "undefined" ? window.innerWidth : 1280),
   }));
 
   useEffect(() => {
     const handleResize = () => {
-      setCanvasStyle((prev) => ({ ...prev, ...getResponsiveBorder(window.innerWidth) }));
+      setCanvasStyle((prev) => ({ ...prev, ...getCanvasBounds(window.innerWidth) }));
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    if (progress < 100) return;
+
+    // Keep the signature frame visible even when assets are cached, then
+    // remove it completely so it cannot create a permanent border/scroll area.
+    const minimumVisibleMs = 650;
+    const fadeMs = 450;
+    const fadeDelay = Math.max(0, minimumVisibleMs - (Date.now() - loaderStartedAt.current));
+    const fadeTimer = window.setTimeout(() => setLoaderPhase("fading"), fadeDelay);
+    const hideTimer = window.setTimeout(() => setLoaderPhase("hidden"), fadeDelay + fadeMs);
+
+    return () => {
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(hideTimer);
+    };
+  }, [progress]);
+
   useGSAP(() => {
     if (progress === 100) {
-      gsap.to('.base-canvas', { opacity: 1, duration: 3, delay: 1 });
-      gsap.to('.grain-overlay', { opacity: 0.18, duration: 3, delay: 1.4 });
+      gsap.to('.base-canvas', { opacity: 1, duration: 0.9, ease: "power2.out" });
+      gsap.to('.grain-overlay', { opacity: 0.18, duration: 1, delay: 0.15 });
     }
   }, [progress]);
 
@@ -70,18 +88,24 @@ const CanvasLoader = (props: { children: React.ReactNode }) => {
     <div className="h-[100dvh] wrapper relative">
       <div className="h-[100dvh] relative" ref={ref}>
         <Canvas className="base-canvas"
-          shadows="soft"
           style={canvasStyle}
           ref={canvasRef}
           gl={{ antialias: true, toneMappingExposure: 1.05 }}
-          dpr={[1, 1.5]}>
+          dpr={1}>
           <Suspense fallback={null}>
+            <color attach="background" args={[backgroundColor]} />
             {/* Soft IBL for the window's physical material. */}
-            <Environment preset="sunset" environmentIntensity={0.45} background={false} />
+            <Environment preset="sunset" resolution={64} environmentIntensity={0.45} background={false} />
             <ambientLight intensity={0.55} />
             <directionalLight position={[-6, 4, 8]} intensity={0.35} color={'#cfe6ff'} />
 
-            <ScrollControls pages={4} damping={0.25} maxSpeed={1} distance={1} style={{ zIndex: 1 }}>
+            <ScrollControls
+              pages={4}
+              damping={0.22}
+              maxSpeed={1}
+              distance={1}
+              style={{ zIndex: 1 }}
+            >
               {props.children}
               <Preloader />
             </ScrollControls>
@@ -103,9 +127,8 @@ const CanvasLoader = (props: { children: React.ReactNode }) => {
             zIndex: 2,
           }}
         />
-        <ProgressLoader progress={progress} />
+        <ProgressLoader progress={progress} phase={loaderPhase} />
       </div>
-      <ThemeSwitcher />
       <ScrollHint />
       <SectionIndicator />
       <PortalCloseButton />

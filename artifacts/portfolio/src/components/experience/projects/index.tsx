@@ -1,4 +1,4 @@
-import { useScroll, useTexture } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -10,19 +10,33 @@ import { MOBILE_BREAKPOINT } from "../../../hooks/useBreakpoint";
 
 const WandererTile = () => {
   const texture = useTexture('/images/wanderer-tile.png');
+
+  useEffect(() => {
+    const image = texture.image as { width?: number; height?: number } | undefined;
+    if (!image?.width || !image.height) return;
+
+    const aspect = image.width / image.height;
+    const repeatX = Math.min(1, 1 / aspect);
+    const repeatY = Math.min(1, aspect);
+    texture.repeat.set(repeatX, repeatY);
+    texture.offset.set((1 - repeatX) / 2, (1 - repeatY) / 2);
+    texture.needsUpdate = true;
+  }, [texture]);
+
   return (
     <mesh position={[0, 0, 0.01]}>
-      <planeGeometry args={[3.0, 3.0]} />
+      <planeGeometry args={[4, 4]} />
       <meshBasicMaterial map={texture} />
     </mesh>
   );
 };
 
+useTexture.preload('/images/wanderer-tile.png');
+
 const Projects = () => {
   const { camera, size } = useThree();
   const isMobile = size.width < MOBILE_BREAKPOINT;
   const isActive = usePortalStore((state) => state.activePortalId === "projects");
-  const data = useScroll();
   const [showModel, setShowModel] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -30,15 +44,13 @@ const Projects = () => {
     if (isActive) {
       if (timerRef.current) clearTimeout(timerRef.current);
       setShowModel(true);
-    } else if (showModel) {
+    } else {
       timerRef.current = setTimeout(() => setShowModel(false), 1200);
     }
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [isActive]);
 
   useEffect(() => {
-    // Hide scrollbar when active.
-    data.el.style.overflow = isActive ? 'hidden' : 'auto';
     if (isActive) {
       gsap.killTweensOf(camera.position);
       gsap.killTweensOf(camera.rotation);
@@ -78,7 +90,7 @@ const Projects = () => {
               <WandererTile />
             </Suspense>
           )}
-          <ProjectsCarousel />
+          {isActive && <ProjectsCarousel />}
         </>
       )}
     </group>

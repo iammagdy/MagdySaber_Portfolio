@@ -27,12 +27,23 @@ type GLTFResult = GLTF & {
 const WindowModel = (props: Partial<THREE.Object3D>) => {
   const handleRef = useRef<THREE.Mesh>(null);
   const windowRef = useRef<THREE.Mesh>(null);
+  const modelRef = useRef<THREE.Group>(null);
 
   const { nodes, materials } = useGLTF('models/window.glb', true ) as unknown as GLTFResult
   const data = useScroll();
   useFrame(() => {
-    const b = data.range(0.4, 0.1);
-    const c = data.range(0.5, 0.1);
+    // The window is an opening-scene object. Once Experience has taken over,
+    // keeping its frame in the scene can leave a stray white edge across the
+    // contact area as the camera passes it.
+    if (modelRef.current) {
+      modelRef.current.visible = data.offset < 0.8;
+      if (!modelRef.current.visible) return;
+    }
+
+    // Open while the camera is descending through the sky, rather than
+    // withholding the door until most of the hero scroll has elapsed.
+    const b = data.range(0.3, 0.14);
+    const c = data.range(0.4, 0.14);
 
     if (handleRef.current) {
       handleRef.current.rotation.y = -0.5 * Math.PI * b;
@@ -43,24 +54,18 @@ const WindowModel = (props: Partial<THREE.Object3D>) => {
   });
 
   return (
-    <group {...props} dispose={null}>
+    <group ref={modelRef} {...props} dispose={null}>
       <group rotation={[0, Math.PI, Math.PI]}>
         <mesh
-          castShadow
-          receiveShadow
           geometry={nodes['#WIN0003_Frame_#WIN0003_Textures_0'].geometry}
           material={materials.WIN0003_Textures}
         />
         <group position={[0.441, -0.039, 0.082]}
           ref={windowRef}>
           <mesh
-            castShadow
-            receiveShadow
             geometry={nodes['#WIN0003_Window_#WIN0003_Textures_0'].geometry}
             material={materials.WIN0003_Textures}/>
           <mesh ref={handleRef}
-            castShadow
-            receiveShadow
             geometry={nodes['#WIN0003_Handle_#WIN0003_Textures_0'].geometry}
             material={materials.WIN0003_Textures}
             position={[-0.84, -0.018, 0.55]} />
