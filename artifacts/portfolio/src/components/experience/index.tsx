@@ -52,7 +52,7 @@ const Experience = () => {
   };
 
   return (
-    <group position={[0, -41.5, 12]} rotation={[-Math.PI / 2, 0 ,-Math.PI / 2]} scale={isMobile ? 0.63 : 1}>
+    <group position={[0, -41.5, 5]} rotation={[-Math.PI / 2, 0 ,-Math.PI / 2]} scale={isMobile ? 0.63 : 1}>
       <group rotation={[0, 0, Math.PI / 2]}>
         <group ref={titleRef} position={[isMobile ? -1.8 : -3.6, 2, -2]}>
           {getTitle()}

@@ -121,7 +121,7 @@ const Timeline = ({ progress }: { progress: number }) => {
       const position = curve.getPoint(progress);
       camera.position.x = THREE.MathUtils.damp(camera.position.x, (isMobile ? 0 : -2) + position.x, 4, delta);
       camera.position.y = THREE.MathUtils.damp(camera.position.y, (isMobile ? -36 : -39) + position.z, 4, delta);
-      camera.position.z = THREE.MathUtils.damp(camera.position.z, 13 - position.y, 4, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, 6 - position.y, 4, delta);
     }
   });
 
