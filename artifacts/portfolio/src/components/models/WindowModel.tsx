@@ -15,6 +15,8 @@ import * as THREE from 'three';
 import { GLTF } from 'three-stdlib'
 import { SCROLL_TIMELINE } from '@constants/scrollTimeline';
 
+const tunnelRotationAxis = new THREE.Vector3(0, -1, 0);
+
 type GLTFResult = GLTF & {
   nodes: {
     ['#WIN0003_Frame_#WIN0003_Textures_0']: THREE.Mesh
@@ -46,6 +48,16 @@ const WindowModel = (props: Partial<THREE.Object3D>) => {
     const openingLength = SCROLL_TIMELINE.doorOpening.end - SCROLL_TIMELINE.doorOpening.start;
     const b = data.range(SCROLL_TIMELINE.doorOpening.start, openingLength);
     const c = data.range(SCROLL_TIMELINE.doorOpening.start, openingLength);
+    const tunnelAnimationLength = SCROLL_TIMELINE.tunnelAnimation.end - SCROLL_TIMELINE.tunnelAnimation.start;
+    const tunnelProgress = data.range(SCROLL_TIMELINE.tunnelAnimation.start, tunnelAnimationLength);
+
+    // The frame shares the tunnel's pivot so the open doorway remains
+    // physically attached to the text walls throughout the passage.
+    if (modelRef.current) {
+      modelRef.current.setRotationFromAxisAngle(tunnelRotationAxis, 0.5 * Math.PI * tunnelProgress);
+      modelRef.current.position.x = -0.6 * tunnelProgress;
+      modelRef.current.position.z = -0.6 * tunnelProgress;
+    }
 
     if (handleRef.current) {
       handleRef.current.rotation.y = -0.5 * Math.PI * b;
