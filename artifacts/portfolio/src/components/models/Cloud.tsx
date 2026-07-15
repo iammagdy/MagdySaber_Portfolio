@@ -1,10 +1,26 @@
-import { Cloud, Clouds } from "@react-three/drei";
+import { Cloud, Clouds, useScroll } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { useRef } from "react";
 import * as THREE from "three";
+import { SCROLL_TIMELINE } from "@constants/scrollTimeline";
 
 const CloudContainer = () => {
+  const data = useScroll();
+  const cloudsRef = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    if (cloudsRef.current) {
+      // By this point the descending camera has already carried the cloud
+      // field behind the doorway. Re-enable it when the visitor scrolls back.
+      cloudsRef.current.visible = data.offset < SCROLL_TIMELINE.cloudJourney.end;
+    }
+  });
+
   return (
-    <Clouds material={THREE.MeshBasicMaterial}
-      position={[0, -5, 0]}>
+    <group ref={cloudsRef}>
+      <Clouds material={THREE.MeshBasicMaterial}
+        position={[0, -5, 0]}
+        frustumCulled={false}>
       <Cloud seed={1}
         segments={1}
         concentrate="inside"
@@ -80,7 +96,9 @@ const CloudContainer = () => {
         volume={3}
         fade={0.1}
         speed={0.1}/>
-    </Clouds>);
+      </Clouds>
+    </group>
+  );
 }
 
 export default CloudContainer;

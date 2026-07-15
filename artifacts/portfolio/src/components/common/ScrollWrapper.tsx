@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 import { usePortalStore, useScrollStore } from "@stores";
+import { SCROLL_TIMELINE } from "@constants/scrollTimeline";
 import TiltGroup from "./TiltGroup";
 import { MOBILE_BREAKPOINT } from "../../hooks/useBreakpoint";
 
@@ -74,11 +75,17 @@ const ScrollWrapper = (props: { children: React.ReactNode | React.ReactNode[]}) 
 
       const range = (start: number, length: number) =>
         THREE.MathUtils.clamp((p - start) / length, 0, 1);
-      const a = range(0, 0.3);
+      const a = range(
+        SCROLL_TIMELINE.cameraRotation.start,
+        SCROLL_TIMELINE.cameraRotation.end - SCROLL_TIMELINE.cameraRotation.start,
+      );
       // Keep the camera in the cloud field while the window begins opening.
       // This preserves the intended sky-to-door reveal instead of racing past
       // the clouds as soon as the handle animates.
-      const b = range(0.3, 0.55);
+      const b = range(
+        SCROLL_TIMELINE.cameraDescent.start,
+        SCROLL_TIMELINE.cameraDescent.end - SCROLL_TIMELINE.cameraDescent.start,
+      );
       const d = range(0.85, 0.18);
 
       if (!isActive) {

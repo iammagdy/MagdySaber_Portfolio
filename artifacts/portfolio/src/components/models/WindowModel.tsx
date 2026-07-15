@@ -13,6 +13,7 @@ import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib'
+import { SCROLL_TIMELINE } from '@constants/scrollTimeline';
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -36,14 +37,15 @@ const WindowModel = (props: Partial<THREE.Object3D>) => {
     // keeping its frame in the scene can leave a stray white edge across the
     // contact area as the camera passes it.
     if (modelRef.current) {
-      modelRef.current.visible = data.offset < 0.8;
+      modelRef.current.visible = data.offset < SCROLL_TIMELINE.doorExit;
       if (!modelRef.current.visible) return;
     }
 
-    // Open while the camera is descending through the sky, rather than
-    // withholding the door until most of the hero scroll has elapsed.
-    const b = data.range(0.3, 0.14);
-    const c = data.range(0.4, 0.14);
+    // The camera reaches the doorway during the later descent; finish the
+    // opening just before it enters so the tunnel is already revealed.
+    const openingLength = SCROLL_TIMELINE.doorOpening.end - SCROLL_TIMELINE.doorOpening.start;
+    const b = data.range(SCROLL_TIMELINE.doorOpening.start, openingLength);
+    const c = data.range(SCROLL_TIMELINE.doorOpening.start, openingLength);
 
     if (handleRef.current) {
       handleRef.current.rotation.y = -0.5 * Math.PI * b;

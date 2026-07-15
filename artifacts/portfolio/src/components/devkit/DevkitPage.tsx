@@ -315,6 +315,14 @@ const SessionJournal = ({ days }: { days: number }) => {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 const DevkitPage = () => {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("devkit-route");
+    window.scrollTo(0, 0);
+
+    return () => root.classList.remove("devkit-route");
+  }, []);
+
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
   const [loginErr, setLoginErr] = useState<string | null>(null);

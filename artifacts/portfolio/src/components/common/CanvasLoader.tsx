@@ -9,7 +9,7 @@ import { SMALL_BREAKPOINT, TABLET_BREAKPOINT } from "../../hooks/useBreakpoint";
 
 import PortalCloseButton from "./PortalCloseButton";
 import Preloader from "./Preloader";
-import ProgressLoader from "./ProgressLoader";
+import ProgressLoader, { ProgressFrame } from "./ProgressLoader";
 import { ScrollHint } from "./ScrollHint";
 import SectionIndicator from "./SectionIndicator";
 
@@ -127,6 +127,7 @@ const CanvasLoader = (props: { children: React.ReactNode }) => {
             zIndex: 2,
           }}
         />
+        <ProgressFrame progress={progress} />
         <ProgressLoader progress={progress} phase={loaderPhase} />
       </div>
       <ScrollHint />

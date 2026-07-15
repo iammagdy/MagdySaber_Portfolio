@@ -4,6 +4,7 @@ import { Text, useScroll } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import * as THREE from "three";
+import { SCROLL_TIMELINE } from "@constants/scrollTimeline";
 
 const _rotAxis = new THREE.Vector3(0, -1, 0);
 
@@ -12,13 +13,13 @@ const TextWindow = () => {
   const windowRef = useRef<THREE.Group>(null);
 
   useFrame(() => {
-    const c = data.range(0.65, 0.15);
+    const tunnelAnimationLength = SCROLL_TIMELINE.tunnelAnimation.end - SCROLL_TIMELINE.tunnelAnimation.start;
+    const c = data.range(SCROLL_TIMELINE.tunnelAnimation.start, tunnelAnimationLength);
 
     if (windowRef.current) {
-      // These labels belong to the opening window only. Once Experience is
-      // on screen they can otherwise enter the camera frustum at huge scale
-      // and overlap the portfolio panels.
-      windowRef.current.visible = data.offset < 0.6;
+      // Keep the text walls mounted behind the door from the start of the
+      // journey. They only leave after Experience has overlapped the tunnel.
+      windowRef.current.visible = data.offset < SCROLL_TIMELINE.tunnelExit;
       if (!windowRef.current.visible) return;
       windowRef.current.setRotationFromAxisAngle(_rotAxis, 0.5 *Math.PI * c);
       windowRef.current.position.x =  -0.6 * c;

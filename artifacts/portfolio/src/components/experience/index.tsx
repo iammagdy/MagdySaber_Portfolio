@@ -7,6 +7,7 @@ import GridTile from "./GridTile";
 import Projects from "./projects";
 import Work from "./work";
 import { MOBILE_BREAKPOINT } from "../../hooks/useBreakpoint";
+import { SCROLL_TIMELINE } from "@constants/scrollTimeline";
 
 const Experience = () => {
   const { camera, size } = useThree();
@@ -17,7 +18,10 @@ const Experience = () => {
   const isActive = usePortalStore((state) => !!state.activePortalId);
 
   useFrame((_, delta) => {
-    const d = data.range(0.8, 0.2);
+    const d = data.range(
+      SCROLL_TIMELINE.experienceTransition.start,
+      SCROLL_TIMELINE.experienceTransition.end - SCROLL_TIMELINE.experienceTransition.start,
+    );
 
     // The camera moves back for the contact continuation near the end of the
     // scroll. Keep the experience panels with it so their previews remain in

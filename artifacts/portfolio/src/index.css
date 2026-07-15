@@ -58,6 +58,22 @@ body,
   overflow: hidden;
 }
 
+/* The 3D landing page owns a controlled Drei scroll surface. DevKit is a
+   normal document dashboard, so it opts into document scrolling on mount. */
+html.devkit-route {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+html.devkit-route body,
+html.devkit-route #root {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
 :root {
   --scrollbarColor: #FFF;
   --scrollbarBackground: rgba(0, 0, 0, 0);
