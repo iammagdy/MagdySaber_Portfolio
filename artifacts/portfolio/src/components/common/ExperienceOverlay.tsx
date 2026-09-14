@@ -54,7 +54,7 @@ const ExperienceOverlay = () => {
           lineHeight: 1.05,
           textAlign: "center",
           textShadow: "0 2px 10px rgba(0, 0, 0, 0.58)",
-          pointerEvents: "none",
+          pointerEvents: isVisible ? "auto" : "none",
           opacity: isVisible ? 1 : 0,
           transform: `translate(-50%, ${isVisible ? "-50%" : "calc(-50% - 0.75rem)"})`,
           transition,

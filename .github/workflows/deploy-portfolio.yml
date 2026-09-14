@@ -84,12 +84,24 @@ jobs:
             git checkout --orphan dist
           fi
 
-          # Replace the working tree with only the new build output.
+          # Keep previously published hashed assets. index.html can be served from
+          # a browser/CDN cache briefly after a deploy, and removing the old
+          # immutable bundle would turn that cached page into a blank screen.
+          if [ -d assets ]; then
+            cp -R assets "$PUBLISH_DIR/legacy-assets"
+          fi
+
+          # Replace the working tree with the new build output.
           git rm -rf --quiet . 2>/dev/null || true
           # `git rm` doesn't always remove untracked files in odd cases; clean explicitly too.
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
 
           cp -R "$PUBLISH_DIR"/. .
+          if [ -d "$PUBLISH_DIR/legacy-assets" ]; then
+            mkdir -p assets
+            cp -Rn "$PUBLISH_DIR/legacy-assets"/. assets/
+            rm -rf "$PUBLISH_DIR/legacy-assets"
+          fi
 
           git add -A
 

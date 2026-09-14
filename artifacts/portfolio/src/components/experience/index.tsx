@@ -26,7 +26,7 @@ const Experience = () => {
     // The camera moves back for the contact continuation near the end of the
     // scroll. Keep the experience panels with it so their previews remain in
     // view instead of slipping behind the visitor.
-    if (experienceRef.current && d > 0) {
+    if (experienceRef.current && (d > 0 || isActive)) {
       experienceRef.current.position.z = THREE.MathUtils.damp(
         experienceRef.current.position.z,
         camera.position.z,
@@ -36,7 +36,7 @@ const Experience = () => {
 
       // Preserve both panels as the contact content enters, while reducing
       // their footprint enough to create a clear reading area underneath.
-      const contactProgress = data.range(0.9, 0.1);
+      const contactProgress = isActive ? 0 : data.range(0.9, 0.1);
       const baseScale = isMobile ? 0.63 : 1;
       const targetScale = baseScale * THREE.MathUtils.lerp(1, 0.55, contactProgress);
       const nextScale = THREE.MathUtils.damp(
@@ -48,9 +48,14 @@ const Experience = () => {
       experienceRef.current.scale.setScalar(nextScale);
     }
 
-    if (groupRef.current && !isActive) {
-      groupRef.current.position.y = d > 0 ? (isMobile ? -2.5 : -1) : -30;
-      groupRef.current.visible = d > 0;
+    if (groupRef.current) {
+      if (isActive) {
+        groupRef.current.position.y = isMobile ? -2.5 : -1;
+        groupRef.current.visible = true;
+      } else {
+        groupRef.current.position.y = d > 0 ? (isMobile ? -2.5 : -1) : -30;
+        groupRef.current.visible = d > 0;
+      }
     }
 
   });

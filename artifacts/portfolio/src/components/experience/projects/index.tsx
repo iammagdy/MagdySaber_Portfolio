@@ -57,7 +57,8 @@ const Projects = () => {
       if (isMobile) {
         gsap.to(camera.position, { z: 4.5, y: -39, x: 0, duration: 1 });
       } else {
-        gsap.to(camera.position, { y: -39, x: 2, duration: 1 });
+        gsap.to(camera.position, { y: -39, x: 2, z: 4.5, duration: 1 });
+        gsap.to(camera.rotation, { x: -Math.PI / 2, z: 0, duration: 0.8 });
       }
     }
   }, [isActive]);

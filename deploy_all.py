@@ -33,13 +33,9 @@ print("\n=== Deploying Frontend ===")
 fe_local = os.path.join(LOCAL_DIR, "artifacts", "portfolio", "dist", "public")
 fe_remote = "domains/magdysaber.com/public_html"
 
-# Clean old hashed assets to avoid stale files
-try:
-    for f in sftp.listdir(f"{fe_remote}/assets"):
-        sftp.remove(f"{fe_remote}/assets/{f}")
-    print("  Cleaned old assets.")
-except Exception as e:
-    print(f"  Asset cleanup: {e}")
+# Keep old hashed assets. index.html may be cached briefly after a deploy,
+# so deleting an older immutable bundle can cause a blank page for visitors.
+print("  Keeping existing hashed assets for cache compatibility.")
 
 def upload_dir(local, remote):
     for item in os.listdir(local):
