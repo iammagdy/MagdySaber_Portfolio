@@ -1,6 +1,7 @@
 import { ScrollControls, useScroll, useTexture } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { usePortalStore } from "@stores";
+import gsap from "gsap";
 import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Memory } from "../../models/Memory";
@@ -62,7 +63,7 @@ const WorkTimeline = () => {
 };
 
 const Work = () => {
-  const { size } = useThree();
+  const { size, camera } = useThree();
   const isMobile = size.width < MOBILE_BREAKPOINT;
   const isActive = usePortalStore((state) => state.activePortalId === 'work');
   const [showModel, setShowModel] = useState(false);
@@ -72,11 +73,13 @@ const Work = () => {
     if (isActive) {
       if (timerRef.current) clearTimeout(timerRef.current);
       setShowModel(true);
+      gsap.killTweensOf(camera.rotation);
+      gsap.to(camera.rotation, { x: 0, y: 0, z: 0, duration: 0.8 });
     } else {
       timerRef.current = setTimeout(() => setShowModel(false), 1200);
     }
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [isActive]);
+  }, [isActive, camera]);
 
   return (
     <group>
