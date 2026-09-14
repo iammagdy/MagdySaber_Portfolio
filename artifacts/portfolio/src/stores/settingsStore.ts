@@ -4,7 +4,12 @@ import { FOOTER_LINKS, PROJECTS, WORK_TIMELINE, EDUCATION_TIMELINE } from "../co
 import type { FooterLink, Project, WorkTimelinePoint } from "../types";
 import { calcWorkPosition, calcEducationPosition } from "../utils/timelinePositions";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL ??
+  (typeof window !== "undefined" && window.location.hostname.includes("magdysaber.com")
+    ? "https://api.magdysaber.com"
+    : "")
+).replace(/\/$/, "");
 const apiUrl = (path: string) => `${API_BASE}${path}`;
 
 const FALLBACK_VERSION = __APP_VERSION__.replace(/\.0$/, "");
