@@ -2,7 +2,21 @@ import { useGSAP } from "@gsap/react";
 import { AdaptiveDpr, Environment, ScrollControls, useProgress } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import gsap from "gsap";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, Component } from "react";
+
+class SafeBoundary extends Component<{ children: React.ReactNode; fallback?: React.ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("SafeBoundary caught error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback ?? null;
+    return this.props.children;
+  }
+}
 
 import { useThemeStore } from "@stores";
 import { SMALL_BREAKPOINT, TABLET_BREAKPOINT } from "../../hooks/useBreakpoint";
@@ -87,31 +101,33 @@ const CanvasLoader = (props: { children: React.ReactNode }) => {
   return (
     <div className="h-[100dvh] wrapper relative">
       <div className="h-[100dvh] relative" ref={ref}>
-        <Canvas className="base-canvas"
-          style={canvasStyle}
-          ref={canvasRef}
-          gl={{ antialias: true, toneMappingExposure: 1.05 }}
-          dpr={1}>
-          <Suspense fallback={null}>
-            <color attach="background" args={[backgroundColor]} />
-            {/* Soft IBL for the window's physical material. */}
-            <Environment preset="sunset" resolution={64} environmentIntensity={0.45} background={false} />
-            <ambientLight intensity={0.55} />
-            <directionalLight position={[-6, 4, 8]} intensity={0.35} color={'#cfe6ff'} />
+        <SafeBoundary>
+          <Canvas className="base-canvas"
+            style={canvasStyle}
+            ref={canvasRef}
+            gl={{ antialias: true, toneMappingExposure: 1.05 }}
+            dpr={1}>
+            <Suspense fallback={null}>
+              <color attach="background" args={[backgroundColor]} />
+              {/* Soft IBL for the window's physical material. */}
+              <Environment preset="sunset" resolution={64} environmentIntensity={0.45} background={false} />
+              <ambientLight intensity={0.55} />
+              <directionalLight position={[-6, 4, 8]} intensity={0.35} color={'#cfe6ff'} />
 
-            <ScrollControls
-              pages={4}
-              damping={0.22}
-              maxSpeed={1}
-              distance={1}
-              style={{ zIndex: 1 }}
-            >
-              {props.children}
-              <Preloader />
-            </ScrollControls>
-          </Suspense>
-          <AdaptiveDpr pixelated/>
-        </Canvas>
+              <ScrollControls
+                pages={4}
+                damping={0.22}
+                maxSpeed={1}
+                distance={1}
+                style={{ zIndex: 1 }}
+              >
+                {props.children}
+                <Preloader />
+              </ScrollControls>
+            </Suspense>
+            <AdaptiveDpr pixelated/>
+          </Canvas>
+        </SafeBoundary>
         <div
           aria-hidden="true"
           className="grain-overlay"

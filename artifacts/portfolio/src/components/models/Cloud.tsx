@@ -3,8 +3,10 @@ import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import * as THREE from "three";
 import { SCROLL_TIMELINE } from "@constants/scrollTimeline";
+import { useThemeStore } from "@stores";
 
 const CloudContainer = () => {
+  const isDarkTheme = useThemeStore((state) => state.theme.type === 'dark');
   const data = useScroll();
   const cloudsRef = useRef<THREE.Group>(null);
 
@@ -12,13 +14,16 @@ const CloudContainer = () => {
     if (cloudsRef.current) {
       // By this point the descending camera has already carried the cloud
       // field behind the doorway. Re-enable it when the visitor scrolls back.
-      cloudsRef.current.visible = data.offset < SCROLL_TIMELINE.cloudJourney.end;
+      cloudsRef.current.visible = !isDarkTheme && data.offset < SCROLL_TIMELINE.cloudJourney.end;
     }
   });
+
+  if (isDarkTheme) return null;
 
   return (
     <group ref={cloudsRef}>
       <Clouds material={THREE.MeshBasicMaterial}
+        texture="/cloud.png"
         position={[0, -5, 0]}
         frustumCulled={false}>
       <Cloud seed={1}
